@@ -43,3 +43,13 @@ for ($i = 1; $i < 6; $i++) {
 }
 
 echo "<br> <br><b>Question 3 ends </b> <br> <br>";
+
+
+// For each loop 
+
+$myarr = array(1, 2, 3, 4, 5);
+foreach ($myarr as $item) {
+    echo "$item <br>";
+}
+
+
