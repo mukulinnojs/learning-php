@@ -29,7 +29,7 @@ $myquery = 'CREATE TABLE student (rollno INT(5) PRIMARY KEY AUTO_INCREMENT, std_
 // $myquery = "DROP TABLE student";
 $result = mysqli_query($conn, $myquery);
 if (!$result) {
-    echo "Failed to CREATED table";
+    echo "Failed to CREATE table";
 } else {
     echo "Table CREATED successfullly";
 }
