@@ -17,8 +17,8 @@ require "utils/db.php";
 <body>
 
 
-
-    <div class="modal fade" id="editmodal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <!-- Edit Modal -->
+    <div class="modal fade" id="editmodal" tabindex="-1" aria-labelledby="edit-modal" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
@@ -27,7 +27,7 @@ require "utils/db.php";
                 </div>
                 <div class="modal-body">
                     <form action="utils/update.php" method="post" class="d-flex gap-2 flex-column">
-                        <input type="hidden" name="sno" id="sno-edit">
+                        <input type="hidden" name="sno-edit" id="sno-edit">
                         <div class="mb-3">
                             <label for="recipient-name" class="col-form-label">Title</label>
                             <input type="text" class="form-control" id="note-title-edit" name="note-title-edit">
@@ -46,11 +46,34 @@ require "utils/db.php";
         </div>
     </div>
 
+    <!-- Delete Modal -->
+    <div class="modal fade" id="deletemodal" tabindex="-1" aria-labelledby="delete-modal" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-2">Delete</h1>
+                    <hr>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form action="utils/delete.php" method="post" class="d-flex gap-2 flex-column">
+                        <input type="hidden" name="sno-delete" id="sno-delete">
+                        <p>Are you sure you want to delete this note ?</p>
+
+                        <div class="align-self-end">
+                            <button type="submit" class="btn btn-danger">Delete</button>
+                            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <?php
 
     if (isset($_SESSION['inserted']) && $_SESSION['inserted']) {
-
         echo "
         <div class='alert alert-success alert-dismissible fade show' role='alert'>
             <strong>Note Added Successfully!</strong>
@@ -64,6 +87,13 @@ require "utils/db.php";
             <button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button>
         </div>";
         $_SESSION['updated'] = false;
+    } elseif (isset($_SESSION['deleted']) && $_SESSION['deleted']) {
+        echo "
+        <div class='alert alert-success alert-dismissible fade show' role='alert'>
+            <strong>Note Deleted Successfully!</strong>
+            <button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button>
+        </div>";
+        $_SESSION['deleted'] = false;
     }
     ?>
 
@@ -86,25 +116,33 @@ require "utils/db.php";
                 <button type="submit" class="btn btn-primary">Add Note</button>
             </form>
 
+            <h1 class="mt-5">Your Notes</h1>
+            <hr>
+
             <!-- Display Table -->
-            <table class="table">
+            <?php
+            $sql = "SELECT *  FROM notes";
+            $result = mysqli_query($conn, $sql);
+            $row = mysqli_fetch_assoc($result);
+            if (!$row) {
+                echo "<label for='title' class='text-danger'>You do not have any notes.</label>";
+            } else {
+                $result = mysqli_query($conn, $sql);
+                $sno = 1;
+                echo "<table class='table'>
                 <thead>
                     <tr>
-                        <th scope="col">S No.</th>
-                        <th scope="col">Title</th>
-                        <th scope="col">Description</th>
-                        <th scope="col">Actions</th>
+                        <th scope='col'>S No.</th>
+                        <th scope='col'>Title</th>
+                        <th scope='col'>Description</th>
+                        <th scope='col'>Actions</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <?php
-                    //DISPLAY NOTES
-                    
-                    $sql = "SELECT *  FROM notes";
-                    $result = mysqli_query($conn, $sql);
-                    $sno = 1;
-                    while ($row = mysqli_fetch_assoc($result)) {
-                        echo "
+                <tbody>";
+
+
+                while ($row = mysqli_fetch_assoc($result)) {
+                    echo "
                             <tr>
                                 <th scope='row'>" . $sno . "</th>
                                 <td>" . $row['title'] . "</td>
@@ -115,12 +153,13 @@ require "utils/db.php";
                                 </td>
                             </tr>                            
                             ";
-                        $sno += 1;
-                    }
+                    $sno += 1;
+                }
+            }
 
-                    ?>
+            ?>
 
-                </tbody>
+            </tbody>
             </table>
 
             <div class="container">
@@ -128,14 +167,51 @@ require "utils/db.php";
             </div>
     </main>
 
-
-
-
-
-    <script src="script.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-k6d4wzSIapyDyv1kpU366/PK5hCdSbCRGRCMv+eplOQJWyd1fbcAu9OCUj5zNLiq"
         crossorigin="anonymous"></script>
+    <script>
+
+        document.addEventListener("DOMContentLoaded", () => {
+            setupmodal();
+        });
+
+        function setupmodal() {
+            const editModal = document.getElementById('editmodal');
+            const deleteModal = document.getElementById('deletemodal');
+            if (editModal && deleteModal) {
+                const noteTitle = document.getElementById('note-title-edit');
+                const noteDesc = document.getElementById('desc-text-edit');
+                const snoedit = document.getElementById('sno-edit');
+                const snodlt = document.getElementById('sno-delete');
+
+
+                editModal.addEventListener('show.bs.modal', event => {
+                    // Button that triggered the modal
+                    const button = event.relatedTarget
+                    // Extract info from data-bs-* attributes
+                    const snoval = button.getAttribute('data-bs-sno');
+                    const title = button.getAttribute('data-bs-title');
+                    const desc = button.getAttribute('data-bs-desc');
+
+                    snoedit.value = snoval;
+                    noteTitle.value = title;
+                    noteDesc.value = desc;
+                })
+
+                deleteModal.addEventListener('show.bs.modal', event => {
+                    // Button that triggered the modal
+                    const button = event.relatedTarget
+                    // Extract info from data-bs-* attributes
+                    const snoval = button.getAttribute('data-bs-sno');
+                    console.log(snoval);
+                    snodlt.value = snoval;
+                    console.log(snodlt.value);
+                })
+            }
+        }
+
+    </script>
 </body>
 
 </html>
