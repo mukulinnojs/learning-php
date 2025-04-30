@@ -1,0 +1,11 @@
+.product-container{
+    margin-left: auto;
+    margin-right: auto;
+    display: grid;
+    justify-content: center;
+    grid-template-columns: repeat(3,250px);
+    gap: 80px;
+}
+.card img{
+    height: 200px;
+}
